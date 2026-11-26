@@ -9,9 +9,11 @@ import { fmtDate } from '../fmt.js'
 
 function buildTree(nodes) {
   const byId = new Map(nodes.map((n) => [n.id, n]))
+  const ids = new Set(nodes.map((n) => n.id))
   const children = new Map()
   for (const n of nodes) {
-    const key = n.parent_id || '__root__'
+    // A node whose parent was filtered out (e.g. session header) is a root
+    const key = ids.has(n.parent_id) ? n.parent_id : '__root__'
     if (!children.has(key)) children.set(key, [])
     children.get(key).push(n)
   }

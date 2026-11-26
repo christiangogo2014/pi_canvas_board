@@ -2,7 +2,7 @@ module Api
   class BoardsController < ApplicationController
     def index
       render json: Board.ordered.as_json(methods: %i[project_path short_path],
-                                          only: %i[id name project_dir sort_field sort_dir])
+                                          only: %i[id name project_dir sort_field sort_dir position])
     end
 
     def show
@@ -29,6 +29,17 @@ module Api
       board = Board.find(params[:id])
       board.update!(sort_params)
       render json: board_json(board)
+    end
+
+    # Persist the drag & drop order of the board tiles (one request for all).
+    def reorder
+      ids = Array(params[:order]).map(&:to_i)
+      Board.transaction do
+        ids.each_with_index { |id, i| Board.find(id).update!(position: i) }
+      end
+      head :no_content
+    rescue ActiveRecord::RecordNotFound
+      render_json_error("unknown board id", status: :not_found)
     end
 
     private

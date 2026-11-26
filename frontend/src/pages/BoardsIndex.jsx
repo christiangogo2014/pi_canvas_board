@@ -1,13 +1,18 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { api } from '../api.js'
 
-// Human label for a board card in the index grid.
-function BoardTile({ board }) {
+// Board tile: link + separate drag handle (so clicks still navigate).
+function BoardTile({ board, dragHandleProps }) {
   return (
     <Link to={`/boards/${board.id}`} className="text-decoration-none">
       <div className="board-tile card h-100">
         <div className="card-body">
+          <span className="board-tile-grip text-body-tertiary" title="Drag to reorder"
+                {...(dragHandleProps || {})}>
+            <i className="bi bi-grip-vertical" />
+          </span>
           <h5 className="card-title mb-1">{board.name}</h5>
           <div className="text-body-secondary small">
             <i className="bi bi-folder2-open me-1" />
@@ -26,6 +31,25 @@ export default function BoardsIndex() {
 
   const load = () => api.boards().then(setBoards)
   useEffect(() => { load() }, [])
+
+  const onDragEnd = async (result) => {
+    if (!result.destination || !boards) return
+    const list = filtered
+    const dragged = list[result.source.index]
+    const target = list[result.destination.index]
+    if (!dragged || !target || dragged.id === target.id) return
+    // Reorder the full list by id (works even while a filter is active)
+    const next = boards.filter((b) => b.id !== dragged.id)
+    next.splice(boards.findIndex((b) => b.id === target.id), 0, dragged)
+    const reordered = next.map((b, i) => ({ ...b, position: i }))
+    setBoards(reordered) // optimistic
+    try {
+      await api.reorderBoards(reordered.map((b) => b.id))
+    } catch (e) {
+      alert(e.message)
+      load()
+    }
+  }
 
   if (!boards) return <CenteredSpinner />
 
@@ -58,11 +82,25 @@ export default function BoardsIndex() {
       {filtered.length === 0
         ? <p className="text-body-secondary">No boards match.</p>
         : (
-          <div className="row row-cols-2 row-cols-md-3 row-cols-lg-4 g-3">
-            {filtered.map((b) => (
-              <div className="col" key={b.id}><BoardTile board={b} /></div>
-            ))}
-          </div>
+          <DragDropContext onDragEnd={onDragEnd}>
+            <Droppable droppableId="board-grid" direction="horizontal">
+              {(dropProv) => (
+                <div className="board-grid" ref={dropProv.innerRef} {...dropProv.droppableProps}>
+                  {filtered.map((b, idx) => (
+                    <Draggable draggableId={String(b.id)} index={idx} key={b.id}>
+                      {(prov) => (
+                        <div ref={prov.innerRef} {...prov.draggableProps} className="board-grid-item">
+                          <BoardTile board={b} dragHandleProps={prov.dragHandleProps} />
+                          {prov.placeholder}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {dropProv.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
     </div>
   )

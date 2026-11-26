@@ -17,6 +17,8 @@ export const api = {
   boards: () => request('/api/boards'),
   board: (id, q) => request(`/api/boards/${id}${q ? `?q=${encodeURIComponent(q)}` : ''}`),
   rescan: () => request('/api/rescan', { method: 'POST' }),
+  reorderBoards: (order) =>
+    request('/api/boards/reorder', { method: 'PATCH', body: JSON.stringify({ order }) }),
 
   sortBoard: (id, sort_field, sort_dir) =>
     request(`/api/boards/${id}/sort`, { method: 'PATCH', body: JSON.stringify({ sort_field, sort_dir }) }),

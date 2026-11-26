@@ -6,12 +6,14 @@ class Board < ApplicationRecord
   has_many :columns, dependent: :destroy
   has_many :card_states, dependent: :destroy
 
+  before_create :assign_position, unless: :position?
+
   validates :name, :project_dir, presence: true
   validates :project_dir, uniqueness: true
   validates :sort_field, inclusion: { in: SORT_FIELDS }
   validates :sort_dir, inclusion: { in: %w[asc desc] }
 
-  scope :ordered, -> { order(:name) }
+  scope :ordered, -> { order(:position, :name) }
 
   # "--Users-chr-conversa--" -> "/Users/chr/conversa"
   def project_path
@@ -59,5 +61,12 @@ class Board < ApplicationRecord
     SessionRecord.joins(:card_states)
                  .where(card_states: { board_id: id, column_id: column.id })
                  .order(Arel.sql("#{sort_field} #{sort_dir}"), "card_states.position ASC")
+  end
+
+  private
+
+  # New boards go last in the manual drag & drop order.
+  def assign_position
+    self.position = (Board.maximum(:position) || -1) + 1
   end
 end

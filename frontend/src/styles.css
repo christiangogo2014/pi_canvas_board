@@ -9,6 +9,20 @@ body { background: var(--bs-body-bg); }
 }
 .board-tile:hover { transform: translateY(-2px); border-color: var(--bs-primary); }
 
+/* Draggable board grid (flex-wrap instead of bootstrap grid for dnd) */
+.board-grid { display: flex; flex-wrap: wrap; gap: .75rem; }
+.board-grid-item { flex: 1 0 240px; max-width: 340px; }
+.board-tile-grip {
+  position: absolute;
+  top: .35rem;
+  right: .5rem;
+  cursor: grab;
+  opacity: .6;
+  z-index: 2;
+}
+.board-tile-grip:hover { opacity: 1; }
+.board-tile { position: relative; }
+
 /* Kanban layout */
 .kanban { overflow-x: auto; min-height: calc(100vh - 56px); align-items: flex-start; }
 .kanban-column { width: var(--kanban-col-w); }

@@ -41,8 +41,26 @@ export default function BoardPage() {
   const columns = board?.columns || []
 
   const onDragEnd = useCallback(async (result) => {
-    const { destination, draggableId } = result
+    const { destination, draggableId, type } = result
     if (!destination) return
+
+    if (type === 'COLUMN') {
+      const from = columns.findIndex((c) => String(c.id) === draggableId)
+      if (from === -1 || from === destination.index) return
+      const next = [...columns]
+      const [moved] = next.splice(from, 1)
+      next.splice(destination.index, 0, moved)
+      const reordered = next.map((c, i) => ({ ...c, position: i }))
+      setBoard((prev) => ({ ...prev, columns: reordered })) // optimistic
+      try {
+        await Promise.all(reordered.map((c) => api.reorderColumn(id, c.id, c.position)))
+      } catch (e) {
+        setError(e.message)
+        load(query)
+      }
+      return
+    }
+
     const col = columns.find((c) => c.id === Number(destination.droppableId))
     if (!col) return
     // Optimistic local move
@@ -103,19 +121,30 @@ export default function BoardPage() {
       </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="kanban d-flex gap-3 p-3">
-          {columns.map((col, idx) => (
-            <KanbanColumn
-              key={col.id}
-              board={board}
-              column={col}
-              index={idx}
-              onCardClick={setSelected}
-              reload={() => load(query)}
-            />
-          ))}
-          <AddColumn board={board} onAdded={() => load(query)} />
-        </div>
+        <Droppable droppableId="board-columns" direction="horizontal" type="COLUMN">
+          {(dropProv) => (
+            <div className="kanban d-flex gap-3 p-3" ref={dropProv.innerRef} {...dropProv.droppableProps}>
+              {columns.map((col, idx) => (
+                <Draggable draggableId={String(col.id)} index={idx} key={col.id}>
+                  {(prov) => (
+                    <div ref={prov.innerRef} {...prov.draggableProps} className="flex-shrink-0">
+                      <KanbanColumn
+                        board={board}
+                        column={col}
+                        index={idx}
+                        dragHandleProps={prov.dragHandleProps}
+                        onCardClick={setSelected}
+                        reload={() => load(query)}
+                      />
+                    </div>
+                  )}
+                </Draggable>
+              ))}
+              {dropProv.placeholder}
+              <AddColumn board={board} onAdded={() => load(query)} />
+            </div>
+          )}
+        </Droppable>
       </DragDropContext>
 
       <SessionModal session={selected} boardId={id} onClose={() => setSelected(null)} />
@@ -136,11 +165,15 @@ function applyMove(board, piId, columnId, index) {
   return { ...board, columns }
 }
 
-function KanbanColumn({ board, column, index, onCardClick, reload }) {
+function KanbanColumn({ board, column, index, dragHandleProps, onCardClick, reload }) {
   return (
-    <div className="kanban-column flex-shrink-0">
-      <div className="d-flex align-items-center justify-content-between px-2 pb-1">
-        <span className="fw-semibold small">{column.title}</span>
+    <div className="kanban-column">
+      <div className="d-flex align-items-center justify-content-between px-2 pb-1"
+           {...(dragHandleProps || {})}>
+        <span className="fw-semibold small">
+          <i className="bi bi-grip-vertical me-1 text-body-tertiary" style={{ cursor: 'grab' }} />
+          {column.title}
+        </span>
         <div className="d-flex align-items-center gap-2">
           <span className="badge text-bg-secondary">{column.cards.length}</span>
           <ColumnMenu board={board} column={column} index={index} reload={reload} />

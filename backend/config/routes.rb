@@ -3,6 +3,9 @@ Rails.application.routes.draw do
 
   namespace :api do
     resources :boards, only: %i[index show update destroy] do
+      collection do
+        patch :reorder
+      end
       member do
         patch :sort
       end

@@ -72,6 +72,24 @@ RSpec.describe "Boards API", type: :request do
     end
   end
 
+  describe "PATCH /api/boards/reorder" do
+    let!(:other) { Board.create!(name: "Other", project_dir: "--Users-chr-other--") }
+
+    it "persists the drag & drop order of boards" do
+      patch "/api/boards/reorder", params: { order: [other.id, board.id] }, as: :json
+      expect(response).to have_http_status(:no_content)
+      expect(board.reload.position).to eq(1)
+      expect(other.reload.position).to eq(0)
+      expect(Board.ordered.map(&:id)).to eq([other.id, board.id])
+    end
+
+    it "rejects an unknown board id without changing anything" do
+      patch "/api/boards/reorder", params: { order: [other.id, 999_999] }, as: :json
+      expect(response).to have_http_status(:not_found)
+      expect(other.reload.position).to eq(1)
+    end
+  end
+
   describe "DELETE /api/boards/:id" do
     it "removes the board" do
       delete "/api/boards/#{board.id}"
