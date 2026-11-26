@@ -1,0 +1,81 @@
+:root { --kanban-col-w: 300px; }
+
+body { background: var(--bs-body-bg); }
+
+/* Boards index tiles */
+.board-tile {
+  transition: transform .1s ease, border-color .1s ease;
+  border: 1px solid var(--bs-border-color);
+}
+.board-tile:hover { transform: translateY(-2px); border-color: var(--bs-primary); }
+
+/* Kanban layout */
+.kanban { overflow-x: auto; min-height: calc(100vh - 56px); align-items: flex-start; }
+.kanban-column { width: var(--kanban-col-w); }
+.add-column {
+  color: var(--bs-secondary-color);
+  border: 1px dashed var(--bs-border-color);
+  border-radius: .5rem;
+  min-height: 48px;
+}
+.add-column:hover { color: var(--bs-body-color); border-color: var(--bs-primary); }
+
+.card-list {
+  background: var(--bs-tertiary-bg);
+  min-height: 120px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
+.card-list.drag-over { outline: 2px solid var(--bs-primary); outline-offset: -2px; }
+
+.session-card {
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: .5rem;
+  padding: .6rem .7rem;
+  cursor: grab;
+  font-size: .875rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,.2);
+}
+.session-card:hover { border-color: var(--bs-primary); }
+
+.badge.text-bg-success-subtle { background: rgba(25,135,84,.25) !important; color: #75d6a2 !important; }
+.badge.text-bg-dark-subtle { background: rgba(108,117,125,.25) !important; color: var(--bs-secondary-color) !important; }
+
+/* Session modal */
+.session-modal .modal-content { min-height: 80vh; }
+.session-modal .modal-body { overflow-y: auto; }
+
+/* Notes timeline */
+.notes-timeline { border-left: 2px solid var(--bs-border-color); margin-left: .55rem; }
+.note-item { display: flex; gap: .6rem; padding: .35rem 0 .35rem .8rem; }
+.note-item + .note-item { border-top: 1px dashed var(--bs-border-color-translucent); }
+.note-icon { color: var(--bs-secondary-color); margin-top: .1rem; }
+
+/* Conversation navigator */
+.conv-wrap { max-height: 72vh; }
+.conv-thread { display: flex; flex-direction: column; gap: .6rem; overflow-y: auto; max-height: 72vh; padding-right: .5rem; }
+.conv-outline { width: 220px; max-height: 72vh; overflow-y: auto; }
+.conv-outline-item { max-width: 100%; font-size: .75rem; padding: .15rem .5rem; }
+.conv-bubble {
+  background: var(--bs-tertiary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: .6rem;
+  padding: .55rem .7rem;
+  max-width: 92%;
+}
+.conv-user { background: rgba(13,110,253,.15); border-color: rgba(13,110,253,.35); }
+.conv-assistant { border-left: 3px solid var(--bs-border-color); }
+.conv-toolResult { background: var(--bs-secondary-bg); font-family: monospace; font-size: .75rem; }
+.conv-active { border-left-color: var(--bs-primary); }
+.conv-active.conv-user { border-left-color: var(--bs-primary); border-left-width: 3px; }
+.conv-flash { outline: 2px solid var(--bs-warning); outline-offset: 2px; }
+.conv-meta { display: flex; gap: .5rem; font-size: .7rem; }
+.conv-text { overflow-wrap: anywhere; }
+.conv-event { text-align: center; font-style: italic; }
+.conv-tool summary { cursor: pointer; color: var(--bs-secondary-color); }
+.branch-chip { max-width: 280px; overflow: hidden; text-overflow: ellipsis; font-size: .75rem; }
+.conv-branches { padding-left: .5rem; }
