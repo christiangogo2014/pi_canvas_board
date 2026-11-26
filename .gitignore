@@ -63,3 +63,4 @@ build-iPhoneSimulator/
 /backend/tmp/
 /backend/vendor/
 /backend/config/master.key
+.DS_Store

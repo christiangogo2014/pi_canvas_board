@@ -12,13 +12,17 @@ customizable kanban board: I can observe my process on each conversation, its
 highlights and insights, and the conclusions I took deliberately — instead of
 digging through a pile of `.jsonl` files.
 
-## What it is, honestly
+## What it is.
 
 It is a **local, single-user tool**. It reads pi's session files
 (`~/.pi/agent/sessions/**.jsonl`) and shows them as cards on boards, so you can
 see, group, annotate and revisit your work. It does **not** send anything
 anywhere, has **no authentication**, and is meant to run on your machine or
 your server, exposed only to you.
+
+![description](images/board.png)
+
+![description](images/projects.png)
 
 Features:
 
