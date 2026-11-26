@@ -37,7 +37,7 @@ export default function BoardsIndex() {
     <div className="container py-4">
       <header className="d-flex align-items-center justify-content-between mb-4">
         <div>
-          <h1 className="h3 mb-0"><i className="bi bi-kanban me-2" />π Canvas Board</h1>
+          <h1 className="h3 mb-0"><i className="bi bi-kanban me-2" />π Kanban Board</h1>
           <div className="text-body-secondary small">{boards.length} project boards</div>
         </div>
         <div className="d-flex gap-2">

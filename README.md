@@ -1,4 +1,4 @@
-# π Canvas Board
+# π Kanban Board
 
 A self-contained Trello-style kanban board for **pi coding-agent sessions**.
 
