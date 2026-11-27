@@ -48,7 +48,7 @@ class SessionsWatcher
       result = @scanner.remove_file(path)
       next unless result
 
-      changed_projects << result[:project_dir]
+      changed_projects << File.basename(File.dirname(path))
     end
 
     changed_projects.uniq.compact.each { |dir| broadcast_refresh(dir) }

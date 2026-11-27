@@ -8,6 +8,13 @@ default: &default
   adapter: sqlite3
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   timeout: 5000
+  # macOS bind mounts (Docker Desktop virtiofs) do not honor SQLite's mmap'd
+  # -shm file: WAL mode silently loses writes and corrupts the DB. Keep the
+  # classic rollback journal and disable mmap instead.
+  pragmas:
+    journal_mode: delete
+    synchronous: full
+    mmap_size: 0
 
 development:
   <<: *default

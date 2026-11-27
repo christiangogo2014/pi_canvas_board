@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { Form } from 'react-bootstrap'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { api } from '../api.js'
 
@@ -7,13 +8,16 @@ import { api } from '../api.js'
 function BoardTile({ board, dragHandleProps }) {
   return (
     <Link to={`/boards/${board.id}`} className="text-decoration-none">
-      <div className="board-tile card h-100">
+      <div className={`board-tile card h-100 ${board.archived ? 'archived' : ''}`}>
         <div className="card-body">
           <span className="board-tile-grip text-body-tertiary" title="Drag to reorder"
                 {...(dragHandleProps || {})}>
             <i className="bi bi-grip-vertical" />
           </span>
-          <h5 className="card-title mb-1">{board.name}</h5>
+          <h5 className="card-title mb-1">
+            {board.name}
+            {board.archived && <span className="badge text-bg-secondary ms-2">Archived</span>}
+          </h5>
           <div className="text-body-secondary small">
             <i className="bi bi-folder2-open me-1" />
             {board.short_path}
@@ -28,6 +32,7 @@ export default function BoardsIndex() {
   const [boards, setBoards] = useState(null)
   const [busy, setBusy] = useState(false)
   const [query, setQuery] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
 
   const load = () => api.boards().then(setBoards)
   useEffect(() => { load() }, [])
@@ -54,17 +59,23 @@ export default function BoardsIndex() {
   if (!boards) return <CenteredSpinner />
 
   const filtered = boards.filter((b) =>
-    b.name.toLowerCase().includes(query.toLowerCase()) ||
-    b.project_path.toLowerCase().includes(query.toLowerCase()))
+    (showArchived || !b.archived) &&
+    (b.name.toLowerCase().includes(query.toLowerCase()) ||
+     b.project_path.toLowerCase().includes(query.toLowerCase())))
 
   return (
     <div className="container py-4">
       <header className="d-flex align-items-center justify-content-between mb-4">
         <div>
           <h1 className="h3 mb-0"><i className="bi bi-kanban me-2" />π Kanban Board</h1>
-          <div className="text-body-secondary small">{boards.length} project boards</div>
+          <div className="text-body-secondary small">
+            {filtered.length} project board{filtered.length === 1 ? '' : 's'}
+          </div>
         </div>
-        <div className="d-flex gap-2">
+        <div className="d-flex gap-2 align-items-center">
+          <Form.Check type="switch" id="show-archived" label="Show archived"
+                      checked={showArchived}
+                      onChange={(e) => setShowArchived(e.target.checked)} />
           <input
             className="form-control form-control-sm"
             style={{ width: 220 }}

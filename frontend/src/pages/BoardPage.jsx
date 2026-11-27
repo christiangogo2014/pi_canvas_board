@@ -76,7 +76,29 @@ export default function BoardPage() {
   const toggleSort = async (field) => {
     const dir = board.sort_field === field && board.sort_dir === 'desc' ? 'asc' : 'desc'
     setBoard({ ...board, sort_field: field, sort_dir: dir }) // optimistic
-    try { await api.sortBoard(id, field, dir) } catch (e) { setError(e.message) }
+    try {
+      // Backend rewrites per-column positions in the chosen order
+      const fresh = await api.sortBoard(id, field, dir)
+      setBoard(fresh)
+    } catch (e) { setError(e.message) }
+  }
+
+  const toggleArchived = async () => {
+    setBoard({ ...board, archived: !board.archived }) // optimistic
+    try { await api.updateBoard(id, { archived: !board.archived }) } catch (e) { setError(e.message) }
+  }
+
+  const addTask = async (columnId, title) => {
+    await api.addTask(id, columnId, title)
+    load(query)
+  }
+  const editTask = async (taskId, title) => {
+    await api.editTask(taskId, title)
+    load(query)
+  }
+  const deleteTask = async (taskId) => {
+    await api.deleteTask(taskId)
+    load(query)
   }
 
   if (error) return <div className="alert alert-danger m-4">{error}</div>
@@ -90,6 +112,7 @@ export default function BoardPage() {
         </Link>
         <div className="me-auto">
           <span className="h5 mb-0 me-2">{board.name}</span>
+          {board.archived && <span className="badge text-bg-secondary me-2">Archived</span>}
           <span className="text-body-secondary small">{board.short_path}</span>
         </div>
 
@@ -114,6 +137,12 @@ export default function BoardPage() {
           </Dropdown.Menu>
         </Dropdown>
 
+        <button className={`btn btn-sm ${board.archived ? 'btn-outline-warning' : 'btn-outline-secondary'}`}
+                title={board.archived ? 'Unarchive board' : 'Archive board'}
+                onClick={toggleArchived}>
+          <i className={`bi ${board.archived ? 'bi-archive-fill' : 'bi-archive'}`} />
+        </button>
+
         <button className="btn btn-sm btn-outline-secondary"
                 onClick={async () => { await api.rescan().catch(alert); load(query) }}>
           <i className="bi bi-arrow-repeat" />
@@ -133,7 +162,10 @@ export default function BoardPage() {
                         column={col}
                         index={idx}
                         dragHandleProps={prov.dragHandleProps}
-                        onCardClick={setSelected}
+                        onCardClick={(s) => s.kind !== 'manual' && setSelected(s)}
+                        onEditTask={editTask}
+                        onDeleteTask={deleteTask}
+                        onAddTask={addTask}
                         reload={() => load(query)}
                       />
                     </div>
@@ -165,7 +197,7 @@ function applyMove(board, piId, columnId, index) {
   return { ...board, columns }
 }
 
-function KanbanColumn({ board, column, index, dragHandleProps, onCardClick, reload }) {
+function KanbanColumn({ board, column, index, dragHandleProps, onCardClick, onEditTask, onDeleteTask, onAddTask, reload }) {
   return (
     <div className="kanban-column">
       <div className="d-flex align-items-center justify-content-between px-2 pb-1"
@@ -191,16 +223,57 @@ function KanbanColumn({ board, column, index, dragHandleProps, onCardClick, relo
                 {(prov) => (
                   <div ref={prov.innerRef} {...prov.draggableProps} {...prov.dragHandleProps}
                        onClick={() => onCardClick(s)}>
-                    <SessionCard session={s} />
+                    <SessionCard session={s} onEdit={onEditTask} onDelete={() => onDeleteTask(s.pi_id)} />
                   </div>
                 )}
               </Draggable>
             ))}
             {provided.placeholder}
+            <TaskComposer columnId={column.id} onAdd={onAddTask} />
           </div>
         )}
       </Droppable>
     </div>
+  )
+}
+
+// Trello-style new-item composer: a "+ Add task" affordance that expands into
+// a textarea (Enter adds, Esc cancels) right inside the column.
+function TaskComposer({ columnId, onAdd }) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+
+  if (!open) {
+    return (
+      <button className="btn btn-sm w-100 text-start text-body-secondary mt-1"
+              onClick={() => setOpen(true)}>
+        <i className="bi bi-plus-lg me-1" />Add task
+      </button>
+    )
+  }
+  const submit = async () => {
+    const t = title.trim()
+    if (!t) return
+    await onAdd(columnId, t)
+    setTitle('')
+    // keep the composer open for consecutive entries (Trello behavior)
+  }
+  return (
+    <form className="task-composer mt-2" onSubmit={(e) => { e.preventDefault(); submit() }}>
+      <textarea className="form-control form-control-sm mb-2" rows={2} autoFocus
+                placeholder="Enter a task title…"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() }
+                  if (e.key === 'Escape') { setOpen(false); setTitle('') }
+                }} />
+      <div className="d-flex gap-2">
+        <button type="submit" className="btn btn-sm btn-primary">Add task</button>
+        <button type="button" className="btn btn-sm btn-outline-secondary"
+                onClick={() => { setOpen(false); setTitle('') }}>Cancel</button>
+      </div>
+    </form>
   )
 }
 

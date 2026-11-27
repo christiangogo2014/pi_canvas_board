@@ -16,6 +16,9 @@ Rails.application.routes.draw do
       end
     end
     patch "boards/:board_id/sessions/:id/move", to: "sessions#move", as: :move_board_session
+    post "boards/:board_id/tasks", to: "tasks#create", as: :create_board_task
+    patch "tasks/:id", to: "tasks#update", as: :task
+    delete "tasks/:id", to: "tasks#destroy"
     get "boards/:board_id/sessions/:id/notes", to: "card_notes#index", as: :session_notes
     get "boards/:board_id/sessions/:id/conversation", to: "sessions#conversation", as: :session_conversation
     post "boards/:board_id/sessions/:id/notes", to: "card_notes#create", as: :create_session_note

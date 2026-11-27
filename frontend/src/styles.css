@@ -95,3 +95,13 @@ body { background: var(--bs-body-bg); }
 .conv-tool summary { cursor: pointer; color: var(--bs-secondary-color); }
 .branch-chip { max-width: 280px; overflow: hidden; text-overflow: ellipsis; font-size: .75rem; }
 .conv-branches { padding-left: .5rem; }
+
+/* Archived boards: muted tiles with an "Archived" badge */
+.board-tile.archived { opacity: 0.55; }
+.board-tile.archived:hover { opacity: 0.75; }
+
+/* Manual task cards: subtle left accent to set them apart from session cards */
+.session-card-manual { border-left: 3px solid var(--bs-warning); }
+
+/* Trello-style inline task composer */
+.task-composer textarea { resize: vertical; }

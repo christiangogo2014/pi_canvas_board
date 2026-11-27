@@ -53,6 +53,11 @@ Rails.application.configure do
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
 
+  # Local-only board: the SPA is served from the same host, so skip the
+  # Action Cable origin check. Without this, production rejects every
+  # WebSocket and live refresh broadcasts never reach the frontend.
+  config.action_cable.disable_request_forgery_protection = true
+
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 

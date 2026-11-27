@@ -22,6 +22,8 @@ export const api = {
 
   sortBoard: (id, sort_field, sort_dir) =>
     request(`/api/boards/${id}/sort`, { method: 'PATCH', body: JSON.stringify({ sort_field, sort_dir }) }),
+  updateBoard: (id, attrs) =>
+    request(`/api/boards/${id}`, { method: 'PATCH', body: JSON.stringify({ board: attrs }) }),
 
   addColumn: (boardId, title) =>
     request(`/api/boards/${boardId}/columns`, { method: 'POST', body: JSON.stringify({ title }) }),
@@ -37,6 +39,14 @@ export const api = {
       method: 'PATCH',
       body: JSON.stringify({ column_id: columnId, position }),
     }),
+
+  // Manual task cards (no pi session behind them)
+  addTask: (boardId, columnId, title) =>
+    request(`/api/boards/${boardId}/tasks`, { method: 'POST', body: JSON.stringify({ column_id: columnId, title }) }),
+  editTask: (taskId, title) =>
+    request(`/api/tasks/${taskId}`, { method: 'PATCH', body: JSON.stringify({ title }) }),
+  deleteTask: (taskId) =>
+    request(`/api/tasks/${taskId}`, { method: 'DELETE' }),
 
   // Notes timeline (description / comments / attachments)
   notes: (boardId, piId) => request(`/api/boards/${boardId}/sessions/${piId}/notes`),

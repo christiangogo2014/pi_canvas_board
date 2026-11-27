@@ -5,9 +5,30 @@ module Api
       card = CardState.find_by!(board_id: params[:board_id], pi_id: params[:id])
       column = Column.find(params[:column_id])
       position = params[:position].present? ? params[:position].to_i : nil
+      position ||= (column.card_states.maximum(:position) || -1) + 1
       previous_column = card.column
+      old_position = card.position
 
       CardState.transaction do
+        if previous_column == column
+          # Same column: close the gap at the old slot, then open one at the
+          # target (the drag index refers to the list without the dragged card).
+          if old_position && position > old_position
+            column.card_states.where("position > ? AND position <= ?", old_position, position)
+                  .update_all("position = position - 1")
+          elsif old_position && position < old_position
+            column.card_states.where("position >= ? AND position < ?", position, old_position)
+                  .update_all("position = position + 1")
+          end
+        else
+          # Cross column: close the gap in the source, open one in the target.
+          if old_position
+            previous_column.card_states.where("position > ?", old_position)
+                           .update_all("position = position - 1")
+          end
+          column.card_states.where("position >= ?", position)
+                .update_all("position = position + 1")
+        end
         card.update!(column: column, position: position)
         normalize_positions!(column)
         normalize_positions!(previous_column) if previous_column && previous_column != column
@@ -37,7 +58,7 @@ module Api
     # Rewrite positions as 0..n-1 in the column's stored order (fallback:
     # board sort order) so drag indexes stay consistent.
     def normalize_positions!(column)
-      column.card_states.order(:position).each_with_index do |c, i|
+      column.card_states.order(:position, :id).each_with_index do |c, i|
         c.update_columns(position: i) unless c.position == i
       end
     end
